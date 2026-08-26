@@ -96,6 +96,8 @@ object EmitCore extends App {
   var targetDir: Option[String] = None
   var useAxi = false
   var useTlul = false
+  var useQspi = false
+  var useQspiTest = false
   for (arg <- args) {
     if (arg.startsWith("--enableFetchL0")) {
       p.enableFetchL0 = arg.split("=")(1).toBoolean
@@ -127,13 +129,17 @@ object EmitCore extends App {
       useAxi = true
     } else if (arg.startsWith("--useTlul")) {
       useTlul = true
+    } else if (arg.startsWith("--useQspiTest")) {
+      useQspiTest = true
+    } else if (arg.startsWith("--useQspi")) {
+      useQspi = true
     } else if (arg.startsWith("--target-dir")) {
       targetDir = Some(arg.split("=")(1))
     } else {
       chiselArgs = chiselArgs :+ arg
     }
   }
-  assert(!(useAxi && useTlul))
+  assert(Seq(useAxi, useTlul, useQspi, useQspiTest).count(identity) <= 1)
 
   val finalModuleName = if (p.itcmSizeKBytes == Parameters.itcmSizeKBytesDefault && p.dtcmSizeKBytes == Parameters.dtcmSizeKBytesDefault) {
     moduleName
@@ -157,6 +163,12 @@ object EmitCore extends App {
   } else if (useTlul) {
     p.m = memoryRegions
     new CoreTlul(p, finalModuleName)
+  } else if (useQspi) {
+    p.m = memoryRegions
+    new CoreQspi(p, finalModuleName)
+  } else if (useQspiTest) {
+    p.m = memoryRegions
+    new CoreQspiTest(p, finalModuleName)
   } else {
     // "Matcha" memory layout
     p.m = Seq(
@@ -186,6 +198,12 @@ object EmitCore extends App {
       {
         lazy val core2 = if (useAxi) {
           new CoreAxi(p, moduleName)
+        } else if (useTlul) {
+          new CoreTlul(p, moduleName)
+        } else if (useQspi) {
+          new CoreQspi(p, moduleName)
+        } else if (useQspiTest) {
+          new CoreQspiTest(p, moduleName)
         } else {
           new Core(p, moduleName)
         }
