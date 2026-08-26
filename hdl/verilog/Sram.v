@@ -110,6 +110,66 @@ module Sram #(
   reg rvalid_reg;
   always @(posedge clock) rvalid_reg <= enable;
   assign rvalid = rvalid_reg;
+`elsif USE_SMIC40
+  ///////////////////////////
+  ////// SMIC40 SRAM ////////
+  ///////////////////////////
+
+  // SMIC40 SRAM:
+  //   CEN  : active-low chip enable
+  //   GWEN : active-low global write enable
+  //   WEN  : active-low bit write enable
+  //
+  // Top-level wmask is active-high per byte:
+  //   wmask[n] = 1 means writing byte n.
+  wire [127:0] nwmask;
+  genvar i_wmask;
+  generate
+    for (i_wmask = 0; i_wmask < 16; i_wmask = i_wmask + 1) begin : gen_wmask
+      assign nwmask[8*i_wmask+:8] = {8{~wmask[i_wmask]}};
+    end
+  endgenerate
+
+  if (NUM_ENTRIES == 2048) begin 
+    sram2048x128sp u_sram (
+        .CLK      (clock),
+        .CEN      (~enable),
+        .GWEN     (~write),
+        .WEN      (nwmask),
+        .A        (addr),
+        .D        (wdata),
+        .Q        (rdata),
+
+        // Timing/margin control
+        .EMA      (3'b010),
+        .EMAW     (2'b00),
+
+        // Disable test mode and tie test ports inactive
+        .TEN      (1'b1),
+        .TCEN     (1'b1),
+        .TGWEN    (1'b1),
+        .TWEN     ({128{1'b1}}),
+        .TA       (11'b0),
+        .TD       (128'b0),
+
+        // Retention, scan and DFT controls
+        .RET1N    (1'b1),
+        .SI       (2'b00),
+        .SE       (1'b0),
+        .DFTRAMBYP(1'b0)
+    );
+  end else begin 
+    initial begin
+      $error("Unsupported SRAM size for SMIC40: %d", NUM_ENTRIES);
+    end
+  end
+
+  reg rvalid_reg;
+  always @(posedge clock) begin
+    rvalid_reg <= enable;
+  end
+
+  assign rvalid = rvalid_reg;
 
 `elsif USE_GF22
   ///////////////////////////
