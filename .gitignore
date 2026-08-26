@@ -1,4 +1,7 @@
 bazel-*
+.bazelbsp/
+.bsp/
+.bazelproject
 .bazelrc.user
 # Robot
 log.html
