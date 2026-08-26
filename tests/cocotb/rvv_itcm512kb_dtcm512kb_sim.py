@@ -97,8 +97,11 @@ async def core_mini_axi_basic_write_read_memory(dut):
     """Basic test to check if TCM memory can be written and read back."""
     core_mini_axi = CoreMiniAxiInterface(dut, csr_base_addr=0x200000)
     await core_mini_axi.init()
-    await core_mini_axi.reset()
+    # Clock must run before reset so the QSPI bridges' reset synchronizers see
+    # the deassertion synchronously; otherwise the first transaction can make
+    # the simulator oscillate at t=0.
     cocotb.start_soon(core_mini_axi.clock.start())
+    await core_mini_axi.reset()
 
     # Test reading/writing words
     await core_mini_axi.write_word(0x100, 0x42)

@@ -31,8 +31,12 @@ class Fixture:
         else:
             inst = cls(dut, **kwargs)
         await inst.core_mini_axi.init()
-        await inst.core_mini_axi.reset()
+        # Start the clock before reset so the reset pulse is seen synchronously.
+        # Starting reset with no clock running leaves the QSPI bridges' reset
+        # synchronizers unclocked; an AXI transaction arriving on the first
+        # clock edge then causes the simulator to oscillate at t=0.
         cocotb.start_soon(inst.core_mini_axi.clock.start())
+        await inst.core_mini_axi.reset()
         return inst
 
     async def load_elf_and_lookup_symbols(
