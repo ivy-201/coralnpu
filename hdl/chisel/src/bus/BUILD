@@ -30,11 +30,14 @@ chisel_library(
     name = "bus",
     srcs = [
         "Axi.scala",
+        "Axi2Qspi.scala",
         "Axi2TLUL.scala",
         "Clint.scala",
         "DmaEngine.scala",
         "Plic.scala",
         "GPIO.scala",
+        "QspiAxiProtocol.scala",
+        "Qspi2Axi.scala",
         "SecdedEncoderTestbench.scala",
         "Spi2TLUL.scala",
         "Spi2TLULV2.scala",
@@ -50,6 +53,7 @@ chisel_library(
         "TlulSocketM1.scala",
         "TlulToSram.scala",
         "TlulWidthBridge.scala",
+        "Spi2Axi.scala",
     ],
     deps = [
         "//hdl/chisel/src/common",
@@ -83,6 +87,28 @@ chisel_cc_library(
     chisel_lib = ":bus",
     emit_class = "bus.EmitTLUL2Axi",
     module_name = "TLUL2Axi",
+)
+
+chisel_cc_library(
+    name = "qspi2axi_cc_library",
+    chisel_lib = ":bus",
+    emit_class = "bus.EmitQspi2Axi",
+    module_name = "Qspi2Axi",
+)
+
+chisel_cc_library(
+    name = "axi2qspi_cc_library",
+    chisel_lib = ":bus",
+    emit_class = "bus.EmitAxi2Qspi",
+    module_name = "Axi2Qspi",
+)
+
+# 新增模块spi2axi
+chisel_cc_library(
+    name = "spi2axi_cc_library",
+    chisel_lib = ":bus",
+    emit_class = "bus.EmitSpi2Axi",
+    module_name = "Spi2Axi",
 )
 
 chisel_cc_library(
