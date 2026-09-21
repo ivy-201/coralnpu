@@ -91,6 +91,10 @@ class Parameters(var m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0, val xlen
   // Expose ports if explicitly requested, or automatically if full verification is enabled.
   def shouldExposeDebugPorts: Boolean = { exposeDebugPorts || enableVerification }
 
+  // Enable the 3-channel clock heartbeat monitor for bring-up:
+  // LED [0] = raw aclk, [1] = post-RstSync system clock, [2] = gated core clock.
+  var enableClockHeartbeat = false
+
   // Enable RVV. This conforms to the RVV1.0 specification.
   var enableRvv = false
   val rvvVlen = 128

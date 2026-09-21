@@ -43,6 +43,8 @@ class CoreQspi(p: Parameters, coreModuleName: String) extends RawModule {
     val debug = Option.when(p.shouldExposeDebugPorts)(new DebugIO(p))
     val dm = new DebugModuleIO(p)
     val te = Input(Bool())
+    // Bring-up clock heartbeat LEDs: [0]=aclk, [1]=post-RstSync, [2]=gated core clock.
+    val heartbeat_led = Option.when(p.enableClockHeartbeat)(Output(UInt(3.W)))
   })
   dontTouch(io)
 
@@ -87,6 +89,10 @@ class CoreQspi(p: Parameters, coreModuleName: String) extends RawModule {
     ioDebug <> coreDebug
   }
   io.dm <> coreAxi.io.dm
+
+  io.heartbeat_led.zip(coreAxi.io.heartbeat_led).foreach {
+    case (ioLed, coreLed) => ioLed := coreLed
+  }
 }
 
 /** Simulation-only wrapper that restores the CoreAxi AXI boundary around
@@ -116,6 +122,7 @@ class CoreQspiTest(p: Parameters, coreModuleName: String) extends RawModule {
     val debug = Option.when(p.shouldExposeDebugPorts)(new DebugIO(p))
     val dm = new DebugModuleIO(p)
     val te = Input(Bool())
+    val heartbeat_led = Option.when(p.enableClockHeartbeat)(Output(UInt(3.W)))
   })
   dontTouch(io)
 
@@ -173,4 +180,8 @@ class CoreQspiTest(p: Parameters, coreModuleName: String) extends RawModule {
     ioDebug <> coreDebug
   }
   io.dm <> coreQspi.io.dm
+
+  io.heartbeat_led.zip(coreQspi.io.heartbeat_led).foreach {
+    case (o, i) => o := i
+  }
 }

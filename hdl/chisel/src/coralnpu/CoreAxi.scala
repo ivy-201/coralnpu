@@ -43,6 +43,8 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     val debug = Option.when(p.shouldExposeDebugPorts)(new DebugIO(p))
     val dm = new DebugModuleIO(p)
     val te = Input(Bool())
+    // Bring-up clock heartbeat LEDs: [0]=aclk, [1]=post-RstSync, [2]=gated core clock.
+    val heartbeat_led = Option.when(p.enableClockHeartbeat)(Output(UInt(3.W)))
   })
   dontTouch(io)
 
@@ -63,6 +65,17 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     val cg = Module(new ClockGate)
     cg.io.clk_i := rst_sync.io.clk_o
     cg.io.te := io.te
+
+    // Bring-up clock heartbeat monitor. Uses raw aresetn (not the synchronized
+    // global/core reset) so a stuck reset or gated core clock can be observed.
+    if (p.enableClockHeartbeat) {
+      val heartbeat = Module(new ClockHeartbeat)
+      heartbeat.io.clk_fast := io.aclk
+      heartbeat.io.clk_sys  := rst_sync.io.clk_o
+      heartbeat.io.clk_core := cg.io.clk_o
+      heartbeat.io.aresetn  := io.aresetn
+      io.heartbeat_led.get  := heartbeat.io.led
+    }
 
     val dm = Module(new DebugModule(p))
         dontTouch(dm.io)

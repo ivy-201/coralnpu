@@ -117,6 +117,8 @@ object EmitCore extends App {
       p.enableVerification = arg.split("=")(1).toBoolean
     } else if (arg.startsWith("--exposeDebugPorts")) {
       p.exposeDebugPorts = arg.split("=")(1).toBoolean
+    } else if (arg.startsWith("--enableClockHeartbeat")) {
+      p.enableClockHeartbeat = arg.split("=")(1).toBoolean
     } else if (arg.startsWith("--lsuDataBits")) {
       p.lsuDataBits = arg.split("=")(1).toInt
     // itcmSizeKBytes, and dtcmSizeKBytes replace highmem flag
