@@ -106,7 +106,18 @@ verilator_cocotb_model(
     trace = False,
     verilog_source = "//hdl/chisel/src/coralnpu:RvvCoreMini_ITCM512KB_DTCM512KBQspiTest.sv",
     deps = [
-        "//hdl/verilog:sram_backdoor",        
+        "//hdl/verilog:sram_backdoor",
+    ],
+)
+
+verilator_cocotb_model(
+    name = "rvv_core_mini_itcm512kb_dtcm512kb_qspi_tapeout_test_model",
+    cflags = VERILATOR_BUILD_ARGS,
+    hdl_toplevel = "RvvHtbt_ITCM512KB_DTCM512KBQspiTest",
+    trace = False,
+    verilog_source = "//hdl/chisel/src/coralnpu:RvvHtbt_ITCM512KB_DTCM512KBQspiTest.sv",
+    deps = [
+        "//hdl/verilog:sram_backdoor",
     ],
 )
 
@@ -546,6 +557,40 @@ cocotb_test_suite(
         "size": "large",
     },
     verilator_model = ":rvv_core_mini_itcm512kb_dtcm512kb_qspi_test_model",
+)
+
+cocotb_test_suite(
+    name = "rvv_itcm512kb_dtcm512kb_qspi_tapeout_tests",
+    simulators = ["verilator"],
+    testcases = [
+        "core_mini_heartbeat_qspi_tapeout",
+        "core_mini_axi_run_wfi_in_all_slots_itcm512kb_dtcm512kb_qspi",
+        "core_mini_rvv_matmul_qspi_tapeout",
+        "core_mini_axi_basic_write_read_memory_qspi_tapeout",
+    ],
+    testcases_vname = "ITCM512KB_DTCM512KB_QSPI_TAPEOUT_TESTCASES",
+    tests_kwargs = {
+        "hdl_toplevel": "RvvHtbt_ITCM512KB_DTCM512KBQspiTest",
+        "waves": False,
+        "seed": "42",
+        "test_module": ["rvv_itcm512kb_dtcm512kb_qspi_tapeout_sim.py"],
+        "deps": [
+            "//coralnpu_test_utils:core_mini_axi_sim_interface",
+            "//coralnpu_test_utils:sim_test_fixture",
+            requirement("tqdm"),
+            "@bazel_tools//tools/python/runfiles",
+        ],
+        "data": [
+            ":wfi_slot_0_itcm512kb_dtcm512kb.elf",
+            ":wfi_slot_1_itcm512kb_dtcm512kb.elf",
+            ":wfi_slot_2_itcm512kb_dtcm512kb.elf",
+            ":wfi_slot_3_itcm512kb_dtcm512kb.elf",
+            "//tests/cocotb/rvv/ml_ops:rvv_matmul_assembly_itcm512kb_dtcm512kb.elf",
+            "//tests/cocotb/rvv/ml_ops:rvv_matmul_itcm512kb_dtcm512kb.elf",
+        ],
+        "size": "enormous",
+    },
+    verilator_model = ":rvv_core_mini_itcm512kb_dtcm512kb_qspi_tapeout_test_model",
 )
 
 coralnpu_v2_binary(

@@ -858,6 +858,33 @@ template_rule(
             ],
             "module_name": "RvvCoreMini_ITCM512KB_DTCM512KBQspiTest",
         },
+        # Tapeout loopback variant of the QSPI test DUT: identical to
+        # `..._qspi_test_cc_library` (still a CoreQspiTest loopback wrapper with
+        # io.dm tied off in RTL) but additionally enables the bring-up clock
+        # heartbeat (`io_heartbeat_led`) so the cocotb tapeout suite can assert
+        # on it. A distinct --moduleName keeps the generated top name from
+        # colliding with the plain QspiTest DUT.
+        "rvv_core_mini_itcm512kb_dtcm512kb_qspi_tapeout_test_cc_library": {
+            "extra_outs": [
+                "VRvvHtbt_ITCM512KB_DTCM512KBQspiTest_parameters.h",
+                "RvvHtbt_ITCM512KB_DTCM512KBQspiTest.zip",
+            ],
+            "gen_flags": [
+                "--moduleName=RvvHtbt",
+                "--itcmSizeKBytes=512",
+                "--dtcmSizeKBytes=512",
+                "--useQspiTest",
+                "--enableClockHeartbeat=True",
+                "--enableFetchL0=False",
+                "--fetchDataBits=128",
+                "--lsuDataBits=128",
+                "--enableRvv=True",
+                "--enableFloat=True",
+                "--enableZfbfmin=True",
+                "--enableVectorBf16=True",
+            ],
+            "module_name": "RvvHtbt_ITCM512KB_DTCM512KBQspiTest",
+        },
     },
     chisel_lib = ":coralnpu",
     emit_class = "coralnpu.EmitCore",
