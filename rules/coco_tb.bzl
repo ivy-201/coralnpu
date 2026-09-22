@@ -28,7 +28,15 @@ load("@rules_python//python:defs.bzl", "py_library")
 # Sourced from `nproc` at workspace-fetch time so we don't oversubscribe
 # small hosts (a hardcoded 8 was blocking 6-core boxes from scheduling
 # more than one action at a time).
-_verilator_make_parallelism = MAKE_JOBS
+#
+# IMPORTANT: this value also drives the INTERNAL `make -j` that the verilate
+# action uses to compile the generated C++ (see make_cmd below). `bazel
+# --jobs=N` does NOT reach inside that action, so on memory-limited hosts
+# (e.g. 7GB WSL boxes) an uncapped MAKE_JOBS (== nproc, e.g. 24) spawns 24
+# parallel g++/cc1plus and OOMs the machine. Cap it at 4 regardless of the
+# detected host CPU count; the per-action resource reservation below is only a
+# scheduler hint and cannot bound this make.
+_verilator_make_parallelism = min(MAKE_JOBS, 4)
 
 def _verilator_resource_estimator(os, input_size):
     # Cap the scheduler reservation at 4 so multiple actions can still run
