@@ -41,7 +41,10 @@ class CoreQspi(p: Parameters, coreModuleName: String) extends RawModule {
     val software_irq = Input(Bool())
 
     val debug = Option.when(p.shouldExposeDebugPorts)(new DebugIO(p))
-    val dm = new DebugModuleIO(p)
+    // NOTE: The external debug (DMI) port is intentionally NOT exposed for the
+    // tapeout configuration. All debug access reaches the DebugModule over the
+    // QSPI target interface through the CSR debug registers
+    // (CoreCsrAddrs.DbgReqAddr .. DbgStatus), so CoreQspi has no io.dm.
     val te = Input(Bool())
     // Bring-up clock heartbeat LEDs: [0]=aclk, [1]=post-RstSync, [2]=gated core clock.
     val heartbeat_led = Option.when(p.enableClockHeartbeat)(Output(UInt(3.W)))
@@ -88,7 +91,12 @@ class CoreQspi(p: Parameters, coreModuleName: String) extends RawModule {
   io.debug.zip(coreAxi.io.debug).foreach { case (ioDebug, coreDebug) =>
     ioDebug <> coreDebug
   }
-  io.dm <> coreAxi.io.dm
+  // The external debug port is tied off here (no io.dm at this boundary). The
+  // DebugModule stays live, driven only by its CSR path (csr.io.debug, the
+  // second dmReqArbiter input) so QSPI-target-accessed CSR debug registers work.
+  coreAxi.io.dm.req.valid := false.B
+  coreAxi.io.dm.req.bits := 0.U.asTypeOf(chiselTypeOf(coreAxi.io.dm.req.bits))
+  coreAxi.io.dm.rsp.ready := true.B
 
   io.heartbeat_led.zip(coreAxi.io.heartbeat_led).foreach {
     case (ioLed, coreLed) => ioLed := coreLed
@@ -179,7 +187,11 @@ class CoreQspiTest(p: Parameters, coreModuleName: String) extends RawModule {
   io.debug.zip(coreQspi.io.debug).foreach { case (ioDebug, coreDebug) =>
     ioDebug <> coreDebug
   }
-  io.dm <> coreQspi.io.dm
+  // CoreQspi no longer exposes a debug port. Keep this simulation-only io.dm
+  // present but inert so the existing cocotb BFM's io_dm_* tie-offs work.
+  io.dm.req.ready := true.B
+  io.dm.rsp.valid := false.B
+  io.dm.rsp.bits := 0.U.asTypeOf(chiselTypeOf(io.dm.rsp.bits))
 
   io.heartbeat_led.zip(coreQspi.io.heartbeat_led).foreach {
     case (o, i) => o := i
